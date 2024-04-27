@@ -8,8 +8,7 @@ CONSTANTS
 VARIABLES 
     door,
     running,
-    timeRemaining,
-    cycles
+    timeRemaining
 
 RequireSafety == FALSE
 RequireLiveness == FALSE
@@ -18,7 +17,7 @@ ImplementStartSafety == FALSE
 ImplementOpenDoorSafety == FALSE
 ImplementProgress == FALSE
 
-vars == << door, running, timeRemaining, cycles >>
+vars == << door, running, timeRemaining >>
 
 TypeOK == door \in { CLOSED, OPEN } /\ running \in { OFF, ON } /\ timeRemaining \in Nat
 
@@ -29,44 +28,41 @@ Init ==
     /\ door \in { OPEN, CLOSED }
     /\ running = OFF
     /\ timeRemaining = 0
-    /\ cycles = 0
 
 \* increment remaining time by one second
 IncTime ==
     /\ running = OFF
     /\ timeRemaining' = timeRemaining + 1
     /\ timeRemaining' <= MaxTime
-    /\ UNCHANGED << door, running, cycles >>
+    /\ UNCHANGED << door, running >>
 
 Start ==
     /\ running = OFF
-    /\ ImplementStartSafety => door = CLOSED
-    /\ cycles < MaxCycles
+    /\ ImplementStartSafety => door = CLOSED \* additional precondition
     /\ timeRemaining > 0
     /\ running' = ON
-    /\ cycles' = cycles + 1
     /\ UNCHANGED << door, timeRemaining >>
 
 Cancel ==
     /\ running' = OFF
     /\ timeRemaining' = 0
-    /\ UNCHANGED << door, cycles >>
+    /\ UNCHANGED << door >>
 
 Tick ==
     /\ running = ON
     /\ timeRemaining' = timeRemaining - 1
     /\ timeRemaining' >= 0
     /\ IF timeRemaining' = 0 THEN running' = OFF ELSE UNCHANGED << running >>
-    /\ UNCHANGED << door, cycles >>
+    /\ UNCHANGED << door >>
 
 OpenDoor ==
     /\ door' = OPEN
-    /\ IF ImplementOpenDoorSafety THEN running' = OFF ELSE UNCHANGED << running >>
-    /\ UNCHANGED << timeRemaining, cycles >>
+    /\ IF ImplementOpenDoorSafety THEN running' = OFF ELSE UNCHANGED << running >> \* additional effect
+    /\ UNCHANGED << timeRemaining >>
 
 CloseDoor ==
     /\ door' = CLOSED
-    /\ UNCHANGED << running, timeRemaining, cycles >>
+    /\ UNCHANGED << running, timeRemaining >>
 
 Next ==
     \/ IncTime
@@ -84,7 +80,7 @@ DoorSafety == RequireSafety => ( door = OPEN => running = OFF )
 
 \* DoorSafety == RequireSafety => running = ON => door = CLOSED
 
-HeatLiveness == ( RequireLiveness => running = ON ) ~> running = OFF
+HeatLiveness == ( running = ON ) ~> ( RequireLiveness => running = OFF )
 
 RunsUntilDoneOrInterrupted == TRUE
 
