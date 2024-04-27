@@ -11,6 +11,13 @@ VARIABLES
     timeRemaining,
     cycles
 
+RequireSafety == TRUE
+RequireLiveness == FALSE
+
+ImplementProgress == TRUE
+ImplementStartSafety == TRUE
+ImplementOpenDoorSafety == TRUE
+
 vars == << door, running, timeRemaining, cycles >>
 
 TypeOK == door \in { CLOSED, OPEN } /\ running \in { OFF, ON } /\ timeRemaining \in Nat
@@ -19,7 +26,7 @@ MaxTime == 5
 MaxCycles == 3
 
 Init ==
-    /\ door = CLOSED
+    /\ door \in { OPEN, CLOSED }
     /\ running = OFF
     /\ timeRemaining = 0
     /\ cycles = 0
@@ -32,6 +39,8 @@ IncTime ==
     /\ UNCHANGED << door, running, cycles >>
 
 Start ==
+    /\ running = OFF
+    /\ ImplementStartSafety => door = CLOSED
     /\ cycles < MaxCycles
     /\ timeRemaining > 0
     /\ running' = ON
@@ -52,15 +61,12 @@ Tick ==
 
 OpenDoor ==
     /\ door' = OPEN
-    /\ UNCHANGED << running, timeRemaining, cycles >>
+    /\ IF ImplementOpenDoorSafety THEN running' = OFF ELSE UNCHANGED << running >>
+    /\ UNCHANGED << timeRemaining, cycles >>
 
 CloseDoor ==
     /\ door' = CLOSED
     /\ UNCHANGED << running, timeRemaining, cycles >>
-
-TickProgress == TRUE
-
-\* TickProgress == WF_timeRemaining(Tick)
 
 Next ==
     \/ IncTime
@@ -70,17 +76,15 @@ Next ==
     \/ CloseDoor
     \/ Tick
 
+TickProgress == ImplementProgress => WF_vars(Next)
+
 Spec == Init /\ [][Next]_vars /\ TickProgress
 
-DoorSafety == TRUE
+DoorSafety == RequireSafety => ( door = OPEN => running = OFF )
 
-\* DoorSafety == door = OPEN => running = OFF
+\* DoorSafety == RequireSafety => running = ON => door = CLOSED
 
-\* DoorSafety == running = ON => door = CLOSED
-
-HeatLiveness == TRUE
-
-\* HeatLiveness == running = ON ~> running = OFF
+HeatLiveness == ( RequireLiveness => running = ON ) ~> running = OFF
 
 RunsUntilDoneOrInterrupted == TRUE
 
