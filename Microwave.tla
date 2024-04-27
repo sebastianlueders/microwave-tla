@@ -14,9 +14,9 @@ VARIABLES
 RequireSafety == FALSE
 RequireLiveness == FALSE
 
-ImplementProgress == FALSE
 ImplementStartSafety == FALSE
 ImplementOpenDoorSafety == FALSE
+ImplementProgress == FALSE
 
 vars == << door, running, timeRemaining, cycles >>
 
