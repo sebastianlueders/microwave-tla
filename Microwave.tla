@@ -20,8 +20,8 @@ ImplementOpenDoorSafety == FALSE
 ImplementProgress == FALSE
 
 TypeOK == 
-  /\ door \in { CLOSED, OPEN } 
-  /\ running \in { OFF, ON } 
+  /\ door \in { CLOSED, OPEN }
+  /\ running \in { OFF, ON }
   /\ timeRemaining \in Nat
 
 MaxTime == 60
