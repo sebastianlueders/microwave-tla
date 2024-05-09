@@ -8,66 +8,66 @@ CONSTANTS
   OFF, ON, CLOSED, OPEN
 
 VARIABLES 
-  door, running, timeRemaining
+  door, radiation, timeRemaining
 
-vars == << door, running, timeRemaining >>
+vars == << door, radiation, timeRemaining >>
 
-RequireSafety == FALSE
+RequireSafety == TRUE
 RequireLiveness == FALSE
 
-ImplementStartSafety == FALSE
-ImplementOpenDoorSafety == FALSE
+ImplementStartSafety == TRUE
+ImplementOpenDoorSafety == TRUE
 ImplementProgress == FALSE
 
 TypeOK == 
   /\ door \in { CLOSED, OPEN }
-  /\ running \in { OFF, ON }
+  /\ radiation \in { OFF, ON }
   /\ timeRemaining \in Nat
 
 MaxTime == 60
 
 Init ==
   /\ door \in { OPEN, CLOSED }
-  /\ running = OFF
+  /\ radiation = OFF
   /\ timeRemaining = 0
 
 IncTime ==
-  /\ running = OFF
+  /\ radiation = OFF
   /\ timeRemaining' = timeRemaining + 1
   /\ timeRemaining' <= MaxTime
-  /\ UNCHANGED << door, running >>
+  /\ UNCHANGED << door, radiation >>
 
 Start ==
-  /\ running = OFF
+  /\ radiation = OFF
   /\ ImplementStartSafety => door = CLOSED
   /\ timeRemaining > 0
-  /\ running' = ON
+  /\ radiation' = ON
   /\ UNCHANGED << door, timeRemaining >>
 
 Cancel ==
-  /\ running' = OFF
+  /\ radiation' = OFF
   /\ timeRemaining' = 0
   /\ UNCHANGED << door >>
 
 Tick ==
-  /\ running = ON
+  /\ radiation = ON
   /\ timeRemaining' = timeRemaining - 1
   /\ timeRemaining' >= 0
   /\ IF timeRemaining' = 0 
-     THEN running' = OFF 
-     ELSE UNCHANGED << running >>
+     THEN radiation' = OFF 
+     ELSE UNCHANGED << radiation >>
   /\ UNCHANGED << door >>
 
 OpenDoor ==
   /\ door' = OPEN
   /\ IF ImplementOpenDoorSafety 
-     THEN running' = OFF 
-     ELSE UNCHANGED << running >>
+     THEN radiation' = OFF 
+     ELSE UNCHANGED << radiation >>
   /\ UNCHANGED << timeRemaining >>
 
 CloseDoor ==
   /\ door' = CLOSED
-  /\ UNCHANGED << running, timeRemaining >>
+  /\ UNCHANGED << radiation, timeRemaining >>
 
 Next ==
   \/ IncTime
@@ -77,20 +77,20 @@ Next ==
   \/ CloseDoor
   \/ Tick
 
-TickProgress == ImplementProgress => WF_vars(Next)
+TickProgress == ImplementProgress => WF_vars(Tick)
 
 Spec == Init /\ [][Next]_vars /\ TickProgress
 
 DoorSafety == RequireSafety => 
-  ( door = OPEN => running = OFF )
+  ( door = OPEN => radiation = OFF )
 
-HeatLiveness == ( running = ON ) ~> 
-  ( RequireLiveness => running = OFF )
+HeatLiveness == ( radiation = ON ) ~> 
+  ( RequireLiveness => radiation = OFF )
 
 RunsUntilDoneOrInterrupted == TRUE
 
 \* RunsUntilDoneOrInterrupted == 
-\*   [][running = ON => running' = ON \/ timeRemaining' = 0 \/ door' = OPEN]_vars
+\*   [][radiation = ON => radiation' = ON \/ timeRemaining' = 0 \/ door' = OPEN]_vars
 
 ====
 
@@ -102,4 +102,4 @@ RunsUntilDoneOrInterrupted == TRUE
     action := "timer"
 *)
 
-\* DoorSafety == RequireSafety => running = ON => door = CLOSED
+\* DoorSafety == RequireSafety => radiation = ON => door = CLOSED

@@ -3,7 +3,7 @@
 This example models a very basic microwave oven with very simple state:
 
 - door open or closed
-- running with heat on or not
+- radiation on or off
 - time remaining in seconds between zero and some maximum
 
 The model has various actions:
