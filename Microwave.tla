@@ -4,21 +4,28 @@
 
 EXTENDS TLC, Integers
 
-CONSTANTS 
-  OFF, ON, CLOSED, OPEN
+CONSTANTS
+  \* Flag for enabling safety check upon starting radiation
+  ImplementStartSafety,
+  \* Flag for enabling safety check upon opening door
+  ImplementOpenDoorSafety
 
-VARIABLES 
-  door, radiation, timeRemaining
+VARIABLES
+  \* See TypeOK below for type constraints
+  door,
+  radiation,
+  timeRemaining
 
+\* Tuple of all variables
 vars == << door, radiation, timeRemaining >>
 
-RequireSafety == TRUE
-RequireLiveness == FALSE
+\* Symbolic names for significant strings
+OFF == "off"
+ON == "on"
+CLOSED == "closed"
+OPEN == "open"
 
-ImplementStartSafety == TRUE
-ImplementOpenDoorSafety == TRUE
-ImplementProgress == FALSE
-
+\* Dynamic type invariant
 TypeOK == 
   /\ door \in { CLOSED, OPEN }
   /\ radiation \in { OFF, ON }
@@ -26,17 +33,20 @@ TypeOK ==
 
 MaxTime == 60
 
+\* Valid initial state(s)
 Init ==
   /\ door \in { OPEN, CLOSED }
   /\ radiation = OFF
   /\ timeRemaining = 0
 
+\* Increment remaining time by one second
 IncTime ==
   /\ radiation = OFF
   /\ timeRemaining' = timeRemaining + 1
   /\ timeRemaining' <= MaxTime
   /\ UNCHANGED << door, radiation >>
 
+\* Start radiation and time countdown
 Start ==
   /\ radiation = OFF
   /\ ImplementStartSafety => door = CLOSED
@@ -44,11 +54,13 @@ Start ==
   /\ radiation' = ON
   /\ UNCHANGED << door, timeRemaining >>
 
+\* Cancel radiation and reset remaining time
 Cancel ==
   /\ radiation' = OFF
   /\ timeRemaining' = 0
   /\ UNCHANGED << door >>
 
+\* Internal clock tick for time countdown
 Tick ==
   /\ radiation = ON
   /\ timeRemaining' = timeRemaining - 1
@@ -58,6 +70,7 @@ Tick ==
      ELSE UNCHANGED << radiation >>
   /\ UNCHANGED << door >>
 
+\* Open door
 OpenDoor ==
   /\ door' = OPEN
   /\ IF ImplementOpenDoorSafety 
@@ -65,10 +78,12 @@ OpenDoor ==
      ELSE UNCHANGED << radiation >>
   /\ UNCHANGED << timeRemaining >>
 
+\* Close door
 CloseDoor ==
   /\ door' = CLOSED
   /\ UNCHANGED << radiation, timeRemaining >>
 
+\* All valid actions (state transitions)
 Next ==
   \/ IncTime
   \/ Start
@@ -77,20 +92,20 @@ Next ==
   \/ CloseDoor
   \/ Tick
 
-TickProgress == ImplementProgress => WF_vars(Tick)
+\* All valid system behaviors starting from the initial state
+Spec == Init /\ [][Next]_vars
 
-Spec == Init /\ [][Next]_vars /\ TickProgress
+\* Valid system behaviors with weak fairness to disallow stuttering
+FSpec == Spec /\ WF_vars(Tick)
 
-DoorSafety == RequireSafety => 
-  ( door = OPEN => radiation = OFF )
+\* Safety check to detect radiation with door open
+DoorSafety == door = OPEN => radiation = OFF
 
-HeatLiveness == ( radiation = ON ) ~> 
-  ( RequireLiveness => radiation = OFF )
+\* Temporal check to detect indefinite radiation
+HeatLiveness == radiation = ON ~> radiation = OFF
 
-RunsUntilDoneOrInterrupted == TRUE
-
-\* RunsUntilDoneOrInterrupted == 
-\*   [][radiation = ON => radiation' = ON \/ timeRemaining' = 0 \/ door' = OPEN]_vars
+RunsUntilDoneOrInterrupted == 
+  [][radiation = ON => radiation' = ON \/ timeRemaining' = 0 \/ door' = OPEN]_vars
 
 ====
 
