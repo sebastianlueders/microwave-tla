@@ -117,4 +117,4 @@ RunsUntilDoneOrInterrupted ==
     action := "timer"
 *)
 
-\* DoorSafety == RequireSafety => radiation = ON => door = CLOSED
+DoorSafety == RequireSafety => radiation = ON => door = CLOSED
